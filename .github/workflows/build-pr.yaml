@@ -1,0 +1,56 @@
+name: Build pull request
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+
+  deploy:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
+      - name: List files
+        run: |
+          git ls-files
+
+      - name: Optimize map
+        uses: AlsaceDigitale/map-optimizer-action@master
+
+      - name: Install SSH Client 🔑
+        uses: webfactory/ssh-agent@v0.4.1
+        with:
+          ssh-private-key: ${{ secrets.DEV_DEPLOY_KEY }}
+
+      - name: Deploy to dev
+        run: |
+          git init
+          git ls-files
+          git config user.name "Jeremie Jost"
+          git config user.email "jeremiejost@gmail.com"
+
+          git remote add upstream "git@github.com:AlsaceDigitale/workadventure-hic2021-dev.git"
+          git fetch upstream
+          git reset upstream/gh-pages
+
+          git add -A .
+          git commit --allow-empty -m "Rebuild pages at ${rev}"
+          git push -q upstream HEAD:gh-pages
+
+      - name: Post PR comment
+        uses: mshick/add-pr-comment@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          message: |
+            Your changes have been successfully deployed to the **[HIC WorkAdventure development server](https://play.workadventu.re/_/global/alsacedigitale.github.io/workadventure-hic2021-dev/map.json)**!
+
+            Test them before merging the pull request to make sure everything works as intended.
+          allow-repeats: true
