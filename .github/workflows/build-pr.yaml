@@ -31,18 +31,24 @@ jobs:
 
       - name: Deploy to dev
         run: |
+          rev=$(git rev-parse --short HEAD)
+
           git init
-          git ls-files
           git config user.name "Jeremie Jost"
           git config user.email "jeremiejost@gmail.com"
+
+          git ls-files
 
           git remote add upstream "git@github.com:AlsaceDigitale/workadventure-hic2021-dev.git"
           git fetch upstream
           git reset upstream/gh-pages
 
           git add -A .
+          git add -A resources
+          git status
           git commit --allow-empty -m "Rebuild pages at ${rev}"
           git push -q upstream HEAD:gh-pages
+
 
       - name: Post PR comment
         uses: mshick/add-pr-comment@v1
